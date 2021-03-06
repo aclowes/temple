@@ -49,8 +49,8 @@ def test_cookiecutter_configs_have_changed(old_config,
     pytest.param(http_codes.not_found,
                  marks=pytest.mark.xfail(raises=requests.exceptions.HTTPError)),
 ])
-def test_get_latest_template_version_w_git_api(http_status, mocker, responses):
-    """Tests temple.update._get_latest_template_version_w_git_api"""
+def test_get_latest_template_version_w_github(http_status, mocker, responses):
+    """Tests temple.update._get_latest_template_version_w_github"""
     api = 'https://api.github.com/repos/owner/template/commits'
     responses.add(responses.GET, api, json=[{'sha': 'v1'}], status=http_status)
 
@@ -65,8 +65,8 @@ def test_get_latest_template_version_w_git_api(http_status, mocker, responses):
     pytest.param(b'\n', b'stderr_w_no_stdout_is_an_error', None,
                  marks=pytest.mark.xfail(raises=RuntimeError)),
 ])
-def test_get_latest_template_version_w_git_ssh(mocker, stdout, stderr, expected):
-    """Tests temple.update._get_latest_template_version_w_git_ssh"""
+def test_get_latest_template_version_w_git(mocker, stdout, stderr, expected):
+    """Tests temple.update._get_latest_template_version_w_git"""
     ls_remote_return = subprocess.CompletedProcess([], returncode=0, stdout=stdout,
                                                    stderr=stderr)
     mock_shell = mocker.patch('temple.utils.shell',
@@ -93,9 +93,9 @@ def test_get_latest_template_version_w_git_ssh(mocker, stdout, stderr, expected)
         marks=pytest.mark.xfail(raises=temple.exceptions.CheckRunError)),
 ])
 def test_get_latest_template_version(mocker, git_ssh_side_effect, git_api_side_effect, expected):
-    mocker.patch('temple.update._get_latest_template_version_w_git_ssh',
+    mocker.patch('temple.update._get_latest_template_version_w_git',
                  autospec=True, side_effect=git_ssh_side_effect)
-    mocker.patch('temple.update._get_latest_template_version_w_git_api',
+    mocker.patch('temple.update._get_latest_template_version_w_github',
                  autospec=True, side_effect=git_api_side_effect)
 
     version = temple.update._get_latest_template_version('template')
