@@ -126,3 +126,30 @@ class GithubClient():
     def get(self, url, **request_kwargs):
         """Github API get"""
         return self._call_api('get', url, **request_kwargs)
+
+class GitLabClient():
+    def __init__(self, template):
+        api_token = os.environ.get('GITLAB_API_TOKEN')
+        gitlab_api = 'https://gitlab.com/api/v4'
+        self.headers = { 'Authorization': f"Bearer {api_token}" }
+        query = template.split('/')[-1:]
+        url = f"{gitlab_api}/projects?search={query}"
+        search_response = requests.get(url, headers=self.headers)
+        search_result = search_response.json()
+        if len(search_result) != 1:
+            print('Template search inconclusive.')
+            exit()
+        self.file_api = f"{gitlab_api}/projects/{search_result[0]['id']}/repository/files"
+
+    def get(self, void, **request_kwargs):
+        url = f"{self.file_api}/cookiecutter.json"
+        return requests.get(
+            url, 
+            headers={**self.headers, **request_kwargs.pop('headers',{})}, 
+            **request_kwargs)
+
+def get_git_client(template='git@github.com:org/repo.git'):
+    if 'gitlab' in template:
+        return GitLabClient(template)
+    else:
+        return GithubClient()
